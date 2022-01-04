@@ -50,17 +50,59 @@ function plugins_cargados () {
 $output = "<a href='". esc_url('file://google.com', ['file', 'otro']) . "'>Google</a>";
 // echo esc_html( $output );
 
-add_action( 'admin_menu', function() {
-    add_menu_page(
-        'MP Pruebas',
-        'MP Pruebas',
-        'manage_options',
-        'mp_pruebas',
-        'mp_pruebas_page_display',
-        '',
-        15
-    );
+$menus = [];
+$menus[] = [
+    'pageTitle' => 'MP Pruebas',
+    'menuTitle' => 'MP Pruebas',
+    'capability' => 'manage_options',
+    'menuSlug' => 'mp_pruebas',
+    'functionName' => 'mp_pruebas_page_display',
+    // 'iconUrl' => plugin_dir_url( __FILE__ ) . 'assets/img/icon.png',
+    'iconUrl' => '',
+    'position' => 15
+];
+$menus[] = [
+    'pageTitle' => 'MP Pruebas1',
+    'menuTitle' => 'MP Pruebas1',
+    'capability' => 'manage_options',
+    'menuSlug' => 'mp_pruebas1',
+    'functionName' => 'mp_pruebas_page_display',
+    // 'iconUrl' => plugin_dir_url( __FILE__ ) . 'assets/img/icon.png',
+    'iconUrl' => '',
+    'position' => 16
+];
+$menus[] = [
+    'pageTitle' => 'MP Pruebas2',
+    'menuTitle' => 'MP Pruebas2',
+    'capability' => 'manage_options',
+    'menuSlug' => plugin_dir_path( __FILE__ ) . 'admin/vista.php',
+    'functionName' => null,
+    // 'iconUrl' => plugin_dir_url( __FILE__ ) . 'assets/img/icon.png',
+    'iconUrl' => '',
+    'position' => 17
+];
 
+function addMenusPage ( $menus ) {
+    // echo var_dump( $menus );
+    if ( is_array( $menus ) ) {
+        for ( $i=0; $i < count( $menus ); $i++ ) { 
+            add_menu_page(
+                $menus[ $i ][ 'pageTitle' ],
+                $menus[ $i ][ 'menuTitle' ],
+                $menus[ $i ][ 'capability' ],
+                $menus[ $i ][ 'menuSlug' ],
+                $menus[ $i ][ 'functionName' ],
+                $menus[ $i ][ 'iconUrl' ],
+                $menus[ $i ][ 'position' ],
+            );        
+        }
+    }
+}
+
+add_action( 'admin_menu', function() use ( $menus ) {
+    addMenusPage( $menus );
+    remove_menu_page( 'mp_pruebas1' );
+    remove_menu_page( 'edit.php?post_type=page' );
 });
 
 if ( !function_exists('mp_pruebas_page_display') ) {
@@ -76,14 +118,19 @@ if ( !function_exists('mp_pruebas_page_display') ) {
                 }
             }
 
-
             ?>
             <br />
-            <form action="" method="POST">
-                <input name="nonce" type="hidden" value="<?php echo $nonce ?>" />
-                <input name="eliminar" type="hidden" value="eliminar" />
-                <button type="submit">Eliminar</button>
-            </form>
+            <?php if ( current_user_can('manage_options') ) { ?>    
+                <form action="" method="POST" class="wrap">
+                    <input name="nonce" type="hidden" value="<?php echo $nonce ?>" />
+                    <input name="eliminar" type="hidden" value="eliminar" />
+                    <input name="texto" type="text" placeholder="Texto a enviar" />
+                    <!-- <button type="submit">Eliminar</button> -->
+                    <?php submit_button('Enviar'); ?>
+                </form>
+            <?php } else { ?>
+                <p>No tienes acceso a este apartado</p>
+            <?php } ?>
             <?php
         }
     }   
