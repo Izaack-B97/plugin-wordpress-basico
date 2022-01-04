@@ -82,25 +82,20 @@ $menus[] = [
     'position' => 17
 ];
 
-function addMenusPage ( $menus ) {
-    // echo var_dump( $menus );
-    if ( is_array( $menus ) ) {
-        for ( $i=0; $i < count( $menus ); $i++ ) { 
-            add_menu_page(
-                $menus[ $i ][ 'pageTitle' ],
-                $menus[ $i ][ 'menuTitle' ],
-                $menus[ $i ][ 'capability' ],
-                $menus[ $i ][ 'menuSlug' ],
-                $menus[ $i ][ 'functionName' ],
-                $menus[ $i ][ 'iconUrl' ],
-                $menus[ $i ][ 'position' ],
-            );        
-        }
-    }
-}
+require_once plugin_dir_path( __FILE__ ) . 'libs/helpers.php';
 
 add_action( 'admin_menu', function() use ( $menus ) {
     addMenusPage( $menus );
+
+    add_submenu_page(
+        'mp_pruebas',
+        'Titulo Submenu 1',
+        'Titulo Submenu 1',
+        'manage_options',
+        'submenu1_mp_pruebas',
+        'submenu1_mp_pruebas_display'
+    );
+
     remove_menu_page( 'mp_pruebas1' );
     remove_menu_page( 'edit.php?post_type=page' );
 });
@@ -135,3 +130,82 @@ if ( !function_exists('mp_pruebas_page_display') ) {
         }
     }   
 }
+
+if ( !function_exists('submenu1_mp_pruebas_display') ) {
+    function submenu1_mp_pruebas_display () {
+        if ( current_user_can( 'edit_others_posts' ) ) {
+            $nonce = wp_create_nonce('este_es_mi_nonce_personalizado');
+        
+            if ( isset( $_POST[ 'nonce' ] ) && !empty( $_POST[ 'nonce' ] ) ) {
+                if ( wp_verify_nonce( $_POST[ 'nonce' ], 'este_es_mi_nonce_personalizado' ) ) {
+                    echo 'Nonce verificado';
+                } else {
+                    echo 'Este nonce no es correcto';
+                }
+            }
+
+            ?>
+            <br />
+            <h1>Este es el submenu 1</h1>
+            <?php if ( current_user_can('manage_options') ) { ?>    
+                <form action="" method="POST" class="wrap">
+                    <input name="nonce" type="hidden" value="<?php echo $nonce ?>" />
+                    <input name="eliminar" type="hidden" value="eliminar" />
+                    <input name="texto" type="text" placeholder="Texto a enviar" />
+                    <!-- <button type="submit">Eliminar</button> -->
+                    <?php submit_button('Enviar'); ?>
+                </form>
+            <?php } else { ?>
+                <p>No tienes acceso a este apartado</p>
+            <?php } ?>
+            <?php
+        }
+    }   
+}
+
+// Filters
+add_filter( 'the_title', 'mp_filtro_titulo', 10, 2 );
+function mp_filtro_titulo ( $title, $post_id ) {
+    $vocals = [ 'a', 'e', 'i', 'o', 'u', 'A', 'E', 'I', 'O', 'U' ];
+    $title = str_replace( $vocals, '*', $title ); 
+    return "$title, $post_id"; 
+}
+
+add_filter( 'the_content', 'mp_filtro_content' );
+function mp_filtro_content ( $content ) {
+    $vocals = [ 'a', 'e', 'i', 'o', 'u', 'A', 'E', 'I', 'O', 'U' ];
+    $content = str_replace( $vocals, '*', $content ); 
+
+    if ( is_singular( 'post' ) && has_post_thumbnail() ) {
+        $thumbnail = get_the_post_thumbnail();
+        $content = $content . $thumbnail;
+    }
+    return $content; 
+}
+
+add_filter('body_class', 'mp_class_body');
+function mp_class_body( $classes ) {
+    
+    if ( in_array( 'post-template-default', $classes ) ) {
+        $index = array_search( 'post-template-default', $classes );
+        unset( $classes[ $index ] );
+    }
+
+    if ( !is_admin() ) {
+        $classes[] = 'mi-nueva-clase';
+    }
+    return $classes;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
